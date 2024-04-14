@@ -7,55 +7,155 @@ interface TimeBlock {
   end: Date | null;
 }
 
+interface CalendarProps {
+  startTime: Date | null;
+  currentDate: Date;
+  selectedTimes: { [key: string]: TimeBlock };
+  handleBlockSelection: (day: string, time: Date) => void;
+  handleMouseMove: (day: string, time: Date) => void;
+  dragging: (isDragging: boolean) => void;
+}
+
+interface SelectedTimeBlocksProps {
+  selectedBlocks: string[];
+  handleReset: () => void;
+  handlePrevWeek: () => void;
+  handleNextWeek: () => void;
+}
+
+const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const weekends = new Set(["Sun", "Sat"]);
+
+const getShortDateString = (day: string, time: Date) => {
+  const date = time.getDate() - time.getDay() + daysOfWeek.indexOf(day);
+  return `${day} ${time.getMonth() + 1}/${date}`;
+};
+
+const CalendarComponent: React.FC<CalendarProps> = ({
+  startTime: startSelection,
+  currentDate,
+  selectedTimes,
+  handleBlockSelection,
+  handleMouseMove,
+  dragging,
+}) => {
+  return (
+    <div className="grid grid-cols-5 gap-2 p-4 select-none">
+      {daysOfWeek.map((day, index) => {
+        // Skip weekends
+        if (weekends.has(day)) {
+          return;
+        }
+
+        const date = new Date(currentDate);
+        date.setDate(currentDate.getDate() - currentDate.getDay() + index);
+        const shortDate = getShortDateString(day, date);
+        const dayTimes = selectedTimes[shortDate];
+
+        return (
+          <div key={day} className="border border-gray-300 p-2">
+            <h2 className="text-lg font-bold mb-2">
+              {day} {date.getMonth() + 1}
+              <span>/</span>
+              {date.getDate()}
+            </h2>
+
+            <div>
+              {Array.from(Array(49).keys()).map((_, timeIndex) => {
+                const hour = Math.floor(timeIndex / 4) + 8;
+                const minute = (timeIndex % 4) * 15;
+                const time = new Date(date);
+                time.setHours(hour);
+                time.setMinutes(minute);
+
+                const isSelected =
+                  dayTimes?.start &&
+                  dayTimes?.end &&
+                  time >= dayTimes.start &&
+                  time <= dayTimes.end &&
+                  time.getHours() >= dayTimes.start.getHours() &&
+                  time.getHours() <= dayTimes.end.getHours();
+
+                const isFullHour = minute === 0;
+
+                return (
+                  <div
+                    key={timeIndex}
+                    className={`text-sm cursor-pointer p-1 border border-gray-200 ${
+                      isSelected ? "bg-blue-200" : "hover:bg-gray-100"
+                    } ${isFullHour ? "font-bold" : ""}`}
+                    onMouseDown={() => handleBlockSelection(day, time)}
+                    onMouseEnter={() => {
+                      // Prevent selecting outside of current date column
+                      if (startSelection?.getDay() === time.getDay()) {
+                        handleMouseMove(day, time);
+                      }
+                    }}
+                    onMouseUp={() => dragging(false)}
+                  >
+                    {time.toLocaleTimeString([], {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const SelectedTimeBlocksComponent: React.FC<SelectedTimeBlocksProps> = ({
+  selectedBlocks,
+  handleReset,
+  handlePrevWeek,
+  handleNextWeek,
+}) => {
+  return (
+    <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center p-4">
+        <h2 className="text-lg font-bold">Selected Time Blocks:</h2>
+        <ul className="list-disc list-inside">
+          {selectedBlocks.map((block, index) => (
+            <li key={index}>{block}</li>
+          ))}
+        </ul>
+      </div>
+      <div className="flex">
+        <button
+          onClick={handleReset}
+          className="mb-4 p-2 bg-gray-500 text-white rounded-md"
+        >
+          Reset
+        </button>
+        <button
+          onClick={handlePrevWeek}
+          className="mb-4 ml-2 p-2 bg-gray-500 text-white rounded-md"
+        >
+          Previous Week
+        </button>
+        <button
+          onClick={handleNextWeek}
+          className="mb-4 ml-2 p-2 bg-gray-500 text-white rounded-md"
+        >
+          Next Week
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const CalendarApp: React.FC = () => {
   const [selectedBlocks, setSelectedBlocks] = useState<string[]>([]);
   const [selectedTimes, setSelectedTimes] = useState<{
     [key: string]: TimeBlock;
   }>({});
   const [dragging, setDragging] = useState<boolean>(false);
-  const [startSelection, setStartSelection] = useState<Date | null>(null);
+  const [startTime, setStartTime] = useState<Date | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
-
-  const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-  const startDate = currentDate.getDate() - currentDate.getDay() + 1;
-
-  const getShortDateString = (day: string, time: Date) => {
-    const date = time.getDate() - time.getDay() + daysOfWeek.indexOf(day) + 1;
-    return `${day} ${time.getMonth()}/${date}`;
-  };
-
-  const handleBlockSelection = (day: string, time: Date) => {
-    if (!dragging) {
-      setDragging(true);
-      setStartSelection(time);
-    } else {
-      setDragging(false);
-      const start = startSelection || new Date();
-      const end = time > start ? time : start;
-      const shortDate = getShortDateString(day, time);
-      const newSelectedTimes = {
-        ...selectedTimes,
-        [shortDate]: { start, end },
-      };
-      setSelectedTimes(newSelectedTimes);
-      setStartSelection(null);
-      setSelectedBlocks(formatSelectedBlocks(newSelectedTimes));
-    }
-  };
-
-  const handleMouseMove = (day: string, time: Date) => {
-    if (dragging) {
-      const start = startSelection || new Date();
-      const end = time > start ? time : start;
-      const shortDate = getShortDateString(day, time);
-      const newSelectedTimes = {
-        ...selectedTimes,
-        [shortDate]: { start, end },
-      };
-      setSelectedTimes(newSelectedTimes);
-      setSelectedBlocks(formatSelectedBlocks(newSelectedTimes));
-    }
-  };
 
   const formatSelectedBlocks = (selectedTimes: {
     [key: string]: TimeBlock;
@@ -80,8 +180,8 @@ const CalendarApp: React.FC = () => {
     return formattedBlocks.sort((a, b) => {
       const dateA = a.split(" ")[1];
       const dateB = b.split(" ")[1];
-      const [aMonth, aDay] = dateA.split("/").map(Number);
-      const [bMonth, bDay] = dateB.split("/").map(Number);
+      const [aMonth, aDay] = dateA.split("/").map((e) => parseInt(e, 10));
+      const [bMonth, bDay] = dateB.split("/").map((e) => parseInt(e, 10));
 
       if (aMonth !== bMonth) {
         return aMonth - bMonth;
@@ -91,114 +191,79 @@ const CalendarApp: React.FC = () => {
     });
   };
 
+  const handleBlockSelection = (day: string, time: Date) => {
+    if (!dragging) {
+      // Mouse down triggers dragging
+      setStartTime(time);
+      setDragging(true);
+    } else {
+      // Mouse up terminates dragging
+      setDragging(false);
+      const start = startTime || new Date();
+      const end = time > start ? time : start;
+      const shortDate = getShortDateString(day, time);
+      const newSelectedTimes = {
+        ...selectedTimes,
+        [shortDate]: { start, end },
+      };
+      setSelectedTimes(newSelectedTimes);
+      setStartTime(null);
+      setSelectedBlocks(formatSelectedBlocks(newSelectedTimes));
+    }
+  };
+
+  const handleMouseMove = (day: string, time: Date) => {
+    if (dragging) {
+      const start = startTime || new Date();
+      const end = time > start ? time : start;
+      const shortDate = getShortDateString(day, time);
+      const newSelectedTimes = {
+        ...selectedTimes,
+        [shortDate]: { start, end },
+      };
+      setSelectedTimes(newSelectedTimes);
+      setSelectedBlocks(formatSelectedBlocks(newSelectedTimes));
+    }
+  };
+
   const handleReset = () => {
+    setCurrentDate(new Date());
     setSelectedBlocks([]);
     setSelectedTimes({});
   };
 
   const handlePrevWeek = () => {
     const prevWeekDate = new Date(currentDate);
-    prevWeekDate.setDate(prevWeekDate.getDate() - 7);
+    prevWeekDate.setDate(prevWeekDate.getDate() - prevWeekDate.getDay() - 7);
     setCurrentDate(prevWeekDate);
   };
 
   const handleNextWeek = () => {
     const nextWeekDate = new Date(currentDate);
-    nextWeekDate.setDate(nextWeekDate.getDate() + 7);
+    nextWeekDate.setDate(nextWeekDate.getDate() - nextWeekDate.getDay() + 7);
     setCurrentDate(nextWeekDate);
+  };
+
+  const handleDragging = (isDragging: boolean) => {
+    setDragging(isDragging);
   };
 
   return (
     <div className="flex flex-row items-center justify-evenly">
-      <div className="grid grid-cols-5 gap-2 p-4 select-none">
-        {daysOfWeek.map((day, index) => {
-          const date = startDate + index;
-          const shortDate = getShortDateString(day, currentDate);
-          const dayTimes = selectedTimes[shortDate];
-
-          return (
-            <div key={day} className="border border-gray-300 p-2">
-              <h2 className="text-lg font-bold mb-2">
-                {day} {date}
-              </h2>
-              <div>
-                {Array.from(Array(49).keys()).map((_, timeIndex) => {
-                  const hour = Math.floor(timeIndex / 4) + 8;
-                  const minute = (timeIndex % 4) * 15;
-                  const time = new Date(currentDate);
-                  time.setHours(hour);
-                  time.setMinutes(minute);
-
-                  const isSelected =
-                    dayTimes?.start &&
-                    dayTimes?.end &&
-                    time >= dayTimes.start &&
-                    time <= dayTimes.end;
-                  const isStartSelected =
-                    dayTimes?.start &&
-                    time.getHours() === dayTimes.start.getHours() &&
-                    time.getMinutes() === dayTimes.start.getMinutes();
-                  const isEndSelected =
-                    dayTimes?.end &&
-                    time.getHours() === dayTimes.end.getHours() &&
-                    time.getMinutes() === dayTimes.end.getMinutes();
-
-                  const isFullHour = minute === 0; // Check if it's a full hour
-
-                  return (
-                    <div
-                      key={timeIndex}
-                      className={`text-sm cursor-pointer p-1 border border-gray-200 ${
-                        isSelected || isStartSelected || isEndSelected
-                          ? "bg-blue-200"
-                          : "hover:bg-gray-100"
-                      } ${isFullHour ? "font-bold" : ""}`}
-                      onMouseDown={() => handleBlockSelection(day, time)}
-                      onMouseEnter={() => handleMouseMove(day, time)}
-                      onMouseUp={() => setDragging(false)}
-                    >
-                      {time.toLocaleTimeString([], {
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="flex flex-col items-center">
-        <div className="flex flex-col items-center p-4">
-          <h2 className="text-lg font-bold">Selected Time Blocks:</h2>
-          <ul className="list-disc list-inside">
-            {selectedBlocks.map((block, index) => (
-              <li key={index}>{block}</li>
-            ))}
-          </ul>
-        </div>
-        <div className="flex">
-          <button
-            onClick={handleReset}
-            className="mb-4 p-2 bg-gray-500 text-white rounded-md"
-          >
-            Reset
-          </button>
-          <button
-            onClick={handlePrevWeek}
-            className="mb-4 ml-2 p-2 bg-gray-500 text-white rounded-md"
-          >
-            Previous Week
-          </button>
-          <button
-            onClick={handleNextWeek}
-            className="mb-4 ml-2 p-2 bg-gray-500 text-white rounded-md"
-          >
-            Next Week
-          </button>
-        </div>
-      </div>
+      <CalendarComponent
+        startTime={startTime}
+        currentDate={currentDate}
+        selectedTimes={selectedTimes}
+        handleBlockSelection={handleBlockSelection}
+        handleMouseMove={handleMouseMove}
+        dragging={handleDragging}
+      />
+      <SelectedTimeBlocksComponent
+        selectedBlocks={selectedBlocks}
+        handleReset={handleReset}
+        handlePrevWeek={handlePrevWeek}
+        handleNextWeek={handleNextWeek}
+      />
     </div>
   );
 };
