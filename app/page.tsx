@@ -53,8 +53,8 @@ const CalendarComponent: React.FC<CalendarProps> = ({
         const dayTimes = selectedTimes[shortDate];
 
         return (
-          <div key={day} className="border border-gray-300 p-2">
-            <h2 className="text-lg font-bold mb-2">
+          <div key={day} className="border border-gray-300 p-2 w-28">
+            <h2 className="text-purple-600 text-lg font-bold mb-2 h-12">
               {day} {date.getMonth() + 1}
               <span>/</span>
               {date.getDate()}
@@ -114,6 +114,16 @@ const SelectedTimeBlocksComponent: React.FC<SelectedTimeBlocksProps> = ({
   handlePrevWeek,
   handleNextWeek,
 }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    const textToCopy = selectedBlocks.join("\n");
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000); // Reset copied state after 2 seconds
+    });
+  };
+
   return (
     <div className="flex flex-col items-center">
       <div className="flex flex-col items-center p-4">
@@ -127,19 +137,27 @@ const SelectedTimeBlocksComponent: React.FC<SelectedTimeBlocksProps> = ({
       <div className="flex">
         <button
           onClick={handleReset}
-          className="mb-4 p-2 bg-gray-500 text-white rounded-md"
+          className="mb-4 ml-2 px-4 py-2 w-full bg-red-500 hover:bg-red-400 text-white rounded-md"
         >
           Reset
         </button>
         <button
+          onClick={handleCopy}
+          className="mb-4 ml-2 px-4 py-2 w-full bg-green-500 hover:bg-green-400 text-white rounded-md"
+        >
+          {copied ? "Copied!" : "Copy"}
+        </button>
+      </div>
+      <div className="flex">
+        <button
           onClick={handlePrevWeek}
-          className="mb-4 ml-2 p-2 bg-gray-500 text-white rounded-md"
+          className="mb-4 ml-2 px-4 py-2 w-full bg-blue-500 hover:bg-blue-400 text-white rounded-md"
         >
           Previous Week
         </button>
         <button
           onClick={handleNextWeek}
-          className="mb-4 ml-2 p-2 bg-gray-500 text-white rounded-md"
+          className="mb-4 ml-2 px-4 py-2 w-full bg-blue-500 hover:bg-blue-400 text-white rounded-md"
         >
           Next Week
         </button>
