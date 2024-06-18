@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface TimeBlock {
   start: Date | null;
@@ -12,7 +12,7 @@ interface CalendarProps {
   currentDate: Date;
   selectedTimes: { [key: string]: TimeBlock };
   handleBlockSelection: (day: string, time: Date) => void;
-  handleMouseMove: (day: string, time: Date) => void;
+  handleMouseOrTouchMove: (day: string, time: Date) => void;
   handlePrevWeek: () => void;
   handleNextWeek: () => void;
   dragging: (isDragging: boolean) => void;
@@ -36,11 +36,45 @@ const CalendarComponent: React.FC<CalendarProps> = ({
   currentDate,
   selectedTimes,
   handleBlockSelection,
-  handleMouseMove,
+  handleMouseOrTouchMove,
+  dragging,
   handlePrevWeek,
   handleNextWeek,
-  dragging,
 }) => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobileView = () => {
+      setIsMobile(window.matchMedia("(max-width: 768px)").matches);
+    };
+
+    // Initial check
+    checkMobileView();
+
+    // Add event listener to check when window is resized
+    window.addEventListener("resize", checkMobileView);
+
+    // Cleanup event listener on component unmount
+    return () => {
+      window.removeEventListener("resize", checkMobileView);
+    };
+  }, []);
+
+  const handleStart = (day: string, time: Date) => {
+    handleBlockSelection(day, time);
+  };
+
+  const handleMove = (day: string, time: Date) => {
+    // Prevent selecting outside of current date column
+    if (startSelection?.getDay() === time.getDay()) {
+      handleMouseOrTouchMove(day, time);
+    }
+  };
+
+  const handleEnd = () => {
+    dragging(false);
+  };
+
   return (
     <div className="m-4">
       <div className="flex flex-row justify-between mb-4">
@@ -101,14 +135,9 @@ const CalendarComponent: React.FC<CalendarProps> = ({
                       className={`text-sm cursor-pointer p-1 border border-gray-200 ${
                         isSelected ? "bg-blue-200" : "hover:bg-gray-100"
                       } ${isFullHour ? "font-bold" : ""}`}
-                      onMouseDown={() => handleBlockSelection(day, time)}
-                      onMouseEnter={() => {
-                        // Prevent selecting outside of current date column
-                        if (startSelection?.getDay() === time.getDay()) {
-                          handleMouseMove(day, time);
-                        }
-                      }}
-                      onMouseUp={() => dragging(false)}
+                      onMouseDown={() => handleStart(day, time)}
+                      onMouseEnter={() => handleMove(day, time)}
+                      onMouseUp={() => (!isMobile ? handleEnd() : handleEnd)}
                     >
                       {time.toLocaleTimeString([], {
                         hour: "numeric",
@@ -232,7 +261,7 @@ const CalendarApp: React.FC = () => {
     }
   };
 
-  const handleMouseMove = (day: string, time: Date) => {
+  const handleMouseOrTouchMove = (day: string, time: Date) => {
     if (dragging) {
       const start = startTime || new Date();
       const end = time > start ? time : start;
@@ -279,10 +308,10 @@ const CalendarApp: React.FC = () => {
         currentDate={currentDate}
         selectedTimes={selectedTimes}
         handleBlockSelection={handleBlockSelection}
-        handleMouseMove={handleMouseMove}
+        handleMouseOrTouchMove={handleMouseOrTouchMove}
+        dragging={handleDragging}
         handlePrevWeek={handlePrevWeek}
         handleNextWeek={handleNextWeek}
-        dragging={handleDragging}
       />
     </div>
   );
