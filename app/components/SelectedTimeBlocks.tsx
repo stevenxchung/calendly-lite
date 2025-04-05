@@ -20,7 +20,7 @@ const SelectedTimeBlocks: React.FC<SelectedTimeBlocksProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center basis-1/3 shrink-0">
       <div className="flex flex-col items-center p-4">
         <h2 className="text-lg font-bold">Selected Time Blocks:</h2>
         <ul className="list-disc list-inside">
