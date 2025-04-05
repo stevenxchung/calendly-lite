@@ -1,4 +1,4 @@
-import { TimeBlock } from "@/types";
+import { SelectedTimes } from "@/types";
 
 export const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export const weekends = new Set(["Sun", "Sat"]);
@@ -15,9 +15,7 @@ export function formatTime(date: Date): string {
   });
 }
 
-export function formatSelectedBlocks(selectedTimes: {
-  [key: string]: TimeBlock;
-}): string[] {
+export function formatSelectedBlocks(selectedTimes: SelectedTimes): string[] {
   const formattedBlocks: string[] = [];
   for (const dateString in selectedTimes) {
     const { start, end } = selectedTimes[dateString];
