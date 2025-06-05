@@ -1,3 +1,7 @@
+# Calendly Lite
+
+Tired of endless 📧 chains just to find a meeting time? Calendly Lite makes scheduling effortless — no accounts, no hassle. Instantly share your availability 📅 with a clean, distraction-free interface built on Next.js and Vercel. 🚀 Enjoy a solarized design for comfortable viewing, 🌞🌙. Scheduling, simplified.
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
