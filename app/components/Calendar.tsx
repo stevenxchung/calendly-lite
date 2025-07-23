@@ -5,7 +5,13 @@ import DayColumn from "@/components/DayColumn";
 import WeekSelector from "@/components/WeekSelector";
 
 const Calendar: React.FC = () => {
-  const { currentDate, handlePrevWeek, handleNextWeek } = useCalendarContext();
+  const {
+    currentDate,
+    setCurrentDate,
+    selectedTimes,
+    setSelectedTimes,
+    resetCounter,
+  } = useCalendarContext();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -27,10 +33,7 @@ const Calendar: React.FC = () => {
 
   return (
     <div className="m-4">
-      <WeekSelector
-        handlePrevWeek={handlePrevWeek}
-        handleNextWeek={handleNextWeek}
-      />
+      <WeekSelector currentDate={currentDate} setCurrentDate={setCurrentDate} />
       <div className="grid sm:grid-cols-3 md:grid-cols-5 select-none">
         {daysOfWeek.map((day, index) => {
           // Skip weekends
@@ -40,15 +43,23 @@ const Calendar: React.FC = () => {
 
           const date = new Date(currentDate);
           date.setDate(currentDate.getDate() - currentDate.getDay() + index);
-          const shortDate = getShortDateString(day, date);
+          const shortDate = getShortDateString(
+            day,
+            date.getMonth(),
+            date.getDate()
+          );
 
           return (
             <DayColumn
               key={day}
               day={day}
-              date={date}
+              year={date.getFullYear()}
+              month={date.getMonth()}
+              dayOfMonth={date.getDate()}
               shortDate={shortDate}
-              isMobile={isMobile}
+              timeBlocks={selectedTimes[shortDate]}
+              setSelectedTimes={setSelectedTimes}
+              resetCounter={resetCounter}
             />
           );
         })}
