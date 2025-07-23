@@ -1,8 +1,12 @@
-interface TimeBlock {
+export interface TimeBlock {
   start: Date | null;
   end: Date | null;
 }
 
+export interface TimeBlocks {
+  [start: string]: TimeBlock;
+}
+
 export interface SelectedTimes {
-  [key: string]: TimeBlock;
+  [date: string]: TimeBlocks;
 }
