@@ -81,7 +81,13 @@ export function formatSelectedBlocks(
   selectedTimes: SelectedTimes
 ): Map<string, string[]> {
   const formattedBlocks = new Map<string, string[]>();
-  for (const [dateString, timeBlocks] of Object.entries(selectedTimes)) {
+
+  // Sort day keys chronologically
+  const sortedEntries = Object.entries(selectedTimes).sort(
+    ([a], [b]) => new Date(a).getTime() - new Date(b).getTime()
+  );
+
+  for (const [dateString, timeBlocks] of sortedEntries) {
     const merged = getMergedBlocksForDay(timeBlocks);
     const formatted = merged.map(
       ({ start, end }) =>
