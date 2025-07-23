@@ -1,44 +1,47 @@
-import React from "react";
-import { useCalendarContext } from "@/hooks/useCalendarContext";
-import { formatTime } from "@/utils/dateUtils";
+import React, { useMemo } from "react";
+import { formatHourMinute } from "@/utils/dateUtils";
 
 interface TimeBlockCellProps {
-  isMobile: boolean;
-  day: string;
-  time: Date;
+  timeValue: number;
   isFullHour: boolean;
   isSelected: boolean | null;
+  startTime: number | null;
+  dragging: boolean;
+  handleBlockSelection: (timeValue: number) => void;
+  handleMouseOrTouchMove: (timeValue: number) => void;
+  blockColor?: string;
 }
 
 const TimeBlockCell: React.FC<TimeBlockCellProps> = ({
-  isMobile,
-  day,
-  time,
+  timeValue,
   isFullHour,
   isSelected,
+  startTime,
+  dragging,
+  handleBlockSelection,
+  handleMouseOrTouchMove,
+  blockColor,
 }) => {
-  const {
-    startTime,
-    handleBlockSelection,
-    handleMouseOrTouchMove,
-    handleDragging,
-  } = useCalendarContext();
-
   return (
     <div
-      className={`text-sm cursor-pointer p-1 border border-gray-200 ${
-        isSelected ? "bg-blue-200" : "hover:bg-gray-100"
-      } ${isFullHour ? "font-bold" : ""}`}
-      onMouseDown={() => handleBlockSelection(day, time)}
+      className={`text-sm cursor-pointer p-1 border border-gray-200 
+        ${isFullHour ? "font-bold" : ""} 
+        ${!isSelected ? "hover:bg-gray-100" : ""}`}
+      style={
+        isSelected && blockColor ? { backgroundColor: blockColor } : undefined
+      }
+      onMouseDown={(e) => {
+        if (e.button !== 0) return; // 0: left, 1: middle, 2: right
+        handleBlockSelection(timeValue);
+      }}
       onMouseEnter={() => {
         // Prevent selecting outside of current date column
-        if (startTime?.getDay() === time.getDay()) {
-          handleMouseOrTouchMove(day, time);
+        if (dragging && startTime !== null) {
+          handleMouseOrTouchMove(timeValue);
         }
       }}
-      onMouseUp={() => (!isMobile ? handleDragging(false) : handleDragging)}
     >
-      {formatTime(time)}
+      {formatHourMinute(new Date(timeValue))}
     </div>
   );
 };

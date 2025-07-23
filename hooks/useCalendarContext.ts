@@ -1,15 +1,12 @@
-import { createContext, useContext } from "react";
+import { createContext, Dispatch, SetStateAction, useContext } from "react";
 import { SelectedTimes } from "@/types";
 
 interface CalendarContextType {
   currentDate: Date;
-  startTime: Date | null;
+  setCurrentDate: Dispatch<SetStateAction<Date>>;
   selectedTimes: SelectedTimes;
-  handleBlockSelection: (day: string, time: Date) => void;
-  handleMouseOrTouchMove: (day: string, time: Date) => void;
-  handleDragging: (isDragging: boolean) => void;
-  handlePrevWeek: () => void;
-  handleNextWeek: () => void;
+  setSelectedTimes: Dispatch<SetStateAction<SelectedTimes>>;
+  resetCounter: number;
 }
 
 export const CalendarContext = createContext<CalendarContextType | null>(null);

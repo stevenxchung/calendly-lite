@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 interface SelectedTimeBlocksProps {
-  selectedBlocks: string[];
+  selectedBlocks: Map<string, string[]>;
   handleReset: () => void;
 }
 
@@ -11,8 +11,17 @@ const SelectedTimeBlocks: React.FC<SelectedTimeBlocksProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
+  const formatForClipboard = () => {
+    return Array.from(selectedBlocks.entries())
+      .map(
+        ([date, blocks]) =>
+          `${date}\n${blocks.map((block) => `• ${block}`).join("\n")}`
+      )
+      .join("\n\n");
+  };
+
   const handleCopy = () => {
-    const textToCopy = selectedBlocks.join("\n");
+    const textToCopy = formatForClipboard();
     navigator.clipboard.writeText(textToCopy).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -24,8 +33,15 @@ const SelectedTimeBlocks: React.FC<SelectedTimeBlocksProps> = ({
       <div className="flex flex-col items-center p-4">
         <h2 className="text-lg font-bold">Selected Time Blocks:</h2>
         <ul className="list-disc list-inside">
-          {selectedBlocks.map((block, index) => (
-            <li key={index}>{block}</li>
+          {Array.from(selectedBlocks.entries()).map(([date, blocks]) => (
+            <ul key={date}>
+              <span className="font-semibold">{date}</span>
+              <ul className="list-disc list-inside ml-4">
+                {blocks.map((block, idx) => (
+                  <li key={idx}>{block}</li>
+                ))}
+              </ul>
+            </ul>
           ))}
         </ul>
       </div>

@@ -1,23 +1,28 @@
 "use client";
 
+import { useEffect } from "react";
 import { CalendarContext } from "@/hooks/useCalendarContext";
 import { useCalendarSelector } from "@/hooks/useCalendarSelector";
-import Calendar from "@/components/Calendar";
+import { formatSelectedBlocks } from "@/utils/timeBlockUtils";
 import SelectedTimeBlocks from "@/components/SelectedTimeBlocks";
+import Calendar from "@/components/Calendar";
 
 export default function CalendarApp() {
   const {
     currentDate,
-    startTime,
+    setCurrentDate,
     selectedBlocks,
+    setSelectedBlocks,
     selectedTimes,
-    handleBlockSelection,
-    handleMouseOrTouchMove,
-    handleDragging,
-    handlePrevWeek,
-    handleNextWeek,
+    setSelectedTimes,
+    resetCounter,
     handleReset,
   } = useCalendarSelector();
+
+  useEffect(() => {
+    // Whenever selectedTimes changes, update selectedBlocks
+    setSelectedBlocks(formatSelectedBlocks(selectedTimes));
+  }, [selectedTimes]);
 
   return (
     <div className="md:flex md:flex-row md:items-center md:justify-evenly">
@@ -28,13 +33,10 @@ export default function CalendarApp() {
       <CalendarContext.Provider
         value={{
           currentDate,
-          startTime,
+          setCurrentDate,
           selectedTimes,
-          handleBlockSelection,
-          handleMouseOrTouchMove,
-          handleDragging,
-          handlePrevWeek,
-          handleNextWeek,
+          setSelectedTimes,
+          resetCounter,
         }}
       >
         <Calendar />
